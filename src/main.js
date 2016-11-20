@@ -5,53 +5,34 @@ const P5 = require('p5');
 
 const buffers = ['assets/audio/eleven.mp3'];
 
-let pattern;
-let rates;
-let slices;
-
+let seq;
 let tick = 0;
-let beat = 0;
-let clock = 0;
-let position = 0;
 
 
 loader(buffers, ctx, (err, samples) => {
-  let sound = new Amaker.SndBuf(samples[0], ctx);
-  rates = [0.4, 0.6, 1.2, 2.4];
+  if(err){
+    return console.log(err);
+  }
 
-  slices = Amaker.slice(samples[0], 128);
-  pattern = Amaker.sequence(slices, rates, 4, 12, 4);
-
-  position = 0
-
-  let p5 = new P5(vis);
+  seq = new Amaker.Sequence(samples[0], ctx,
+    {
+      numSlices: 128,
+      rates: [0.8, 1.6],
+      minLength: 4,
+      maxLength: 12,
+      maxDuration: 4
+    }
+  );
 
   document.getElementById('reset').addEventListener('click', () => {
-    pattern = Amaker.reset(slices, rates, 4, 12, 4);
-    p5.reset();
-    position = 0;
-    clock = 0;
+    seq.reset();
   })
-
 
   setInterval( () => {
     if(tick % 12 == 0) {
-      if(clock == 0){
-        sound.rate(pattern.rates[position]);
-        sound.pos(pattern.sequence[position]);
-      }
-
-      clock++;
-      if (clock == pattern.time[position]) {
-        clock = 0; 
-        position = (position + 1) % pattern.sequence.length;
-      }
+      seq.play();
     }
-     
-    tick++;
-    if (tick % 24 == 0) {
-      beat = (beat + 1) % 16;
-    }
+    tick += 1;
   }, 10);
 });
 

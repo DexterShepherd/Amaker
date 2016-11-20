@@ -64,39 +64,7 @@ class SndBuf {
   }
 }
 
-class Sequence {
-  contsructor(sound, context, params) {
-    this.sound = new SndBuf(sound, context);
-    this.rates = params.rates;
-    this.position = 0;
-    this.clock = 0;
-    this.pattern = pattern(this.sound, params);
-  }
-
-  play() {
-    if (this.clock == 0) {
-      this.sound.rate(this.pattern.rates[this.position]);
-      this.sound.pos(this.pattern.notes[this.position]);
-    }
-    advanceTimer();
-  }
-
-  reset() {
-    this.position = 0;
-    this.clock = 0;
-    this.pattern = pattern(this.sound, params);
-  }
-
-  advanceTimer() {
-    this.clock += 1;
-    if (this.clock == this.pattern.time[this.position]) {
-      this.clock = 0;
-      this.position = (this.position + 1) % this.pattern.length;
-    }
-  }
-}
-
-function pattern(sound, numSlices, rates, minLength, maxLength, maxDuration) {
+function pattern(sound, params) {
   let slices = slice(sound, params.numSlices);
   let length = Math.floor(Math.random() * (params.maxLength - params.minLength)) + params.minLength;
   let chops = [];
@@ -104,13 +72,52 @@ function pattern(sound, numSlices, rates, minLength, maxLength, maxDuration) {
   let rate_seq = [];
 
   for (let i = 0; i < length; i++) {
-    chops.push(slices[Math.floor(Math.random() * slices.length)]);
-    durations.push(Math.floor(Math.random() * maxDuration) + 1);
-    rate_seq.push(rates[Math.floor(Math.random() * rates.length)])
+    chops.push(slices[Math.floor(Math.random() * slices.length)] / 1000);
+    durations.push(Math.floor(Math.random() * params.maxDuration) + 1);
+    rate_seq.push(params.rates[Math.floor(Math.random() * params.rates.length)])
   }
 
-  return { notes: chops, time: durations, rates: rate_seq, length: length };
+  return { notes: chops, times: durations, rates: rate_seq, length: length };
 }
+
+class Sequence {
+  // { numSlices, rates, minLength, maxLength, maxDuration }
+  constructor(buffer, context, params) {
+    this.buffer = buffer;
+    this.context = context;
+    this.params = params;
+
+    this.sound = new SndBuf(this.buffer, this.context);
+    this.position = 0;
+    this.clock = 0;
+    this.pattern = pattern(this.sound, this.params);
+  }
+
+  play() {
+    if (this.clock == 0) {
+      this.sound.rate(this.pattern.rates[this.position]);
+      this.sound.pos(this.pattern.notes[this.position]);
+    }
+    this.advanceTimer();
+  }
+
+  reset() {
+    this.position = 0;
+    this.clock = 0;
+    this.pattern = pattern(this.sound, this.params);
+    console.log('pattern reset');
+    console.log(this.pattern);
+  }
+
+  advanceTimer() {
+    this.clock += 1;
+    if (this.clock == this.pattern.times[this.position]) {
+      this.clock = 0;
+      this.position = (this.position + 1) % this.pattern.length;
+    }
+  }
+}
+
 
 function slice(buffer, numSlices) {
   let slices = [];
@@ -122,8 +129,5 @@ function slice(buffer, numSlices) {
 
 
 module.exports = {
-  SndBuf: SndBuf,
-  Sample: Sample,
-  reset: reset,
-  sequence: sequence
-}
+  Sequence: Sequence
+};
