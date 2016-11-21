@@ -61,10 +61,12 @@
 	var ctx = new AudioContext();
 	var loader = __webpack_require__(2);
 	var Amaker = __webpack_require__(6);
+	var Graphics = __webpack_require__(7);
 	var P5 = __webpack_require__(8);
 
 	var buffers = ['assets/audio/eleven.mp3'];
 
+	var visuals = void 0;
 	var sequences = [];
 	var sequenceIndex = 0;
 	var tick = 0;
@@ -74,23 +76,29 @@
 	    return console.log(err);
 	  }
 
+	  visuals = new Graphics.VisualController();
+
 	  document.getElementById('add').addEventListener('click', function () {
-	    sequences.push(new Amaker.Sequence(samples[0], ctx, sequenceIndex, {
+	    sequences.push(new Amaker.Sequence(samples[0], ctx, visuals, {
 	      numSlices: 128,
-	      rates: [0.8, 1.6],
+	      rates: [0.4, 0.8, 1.6],
 	      minLength: 4,
 	      maxLength: 12,
-	      maxDuration: 4
+	      maxDuration: 4,
+	      index: sequenceIndex
 	    }));
+
 	    sequenceIndex += 1;
-	    console.log(sequences);
 	  });
 
 	  setInterval(function () {
 	    if (tick % 12 == 0) {
+	      var positions = [];
 	      for (var i = 0; i < sequences.length; i++) {
 	        sequences[i].play();
+	        positions.push(sequences[i].position);
 	      }
+	      visuals.update(positions);
 	    }
 	    tick += 1;
 	  }, 10);
@@ -1704,20 +1712,19 @@
 
 	var Sequence = function () {
 	  // { numSlices, rates, minLength, maxLength, maxDuration }
-	  function Sequence(buffer, context, index, params) {
+	  function Sequence(buffer, context, visuals, params) {
 	    _classCallCheck(this, Sequence);
 
 	    this.buffer = buffer;
 	    this.context = context;
 	    this.params = params;
-	    this.index = index;
-
+	    this.graphics = visuals;
 	    this.sound = new SndBuf(this.buffer, this.context);
 	    this.position = 0;
 	    this.clock = 0;
 	    this.pattern = pattern(this.sound, this.params);
 
-	    this.graphics = new Graphics.VisualContainer(this.index, this.pattern.length);
+	    this.graphics.add(this.params.index, this.pattern.length);
 	  }
 
 	  _createClass(Sequence, [{
@@ -1777,68 +1784,6 @@
 
 	var p5 = __webpack_require__(8);
 
-	var VisualContainer = function () {
-	  function VisualContainer(id, numSteps) {
-	    _classCallCheck(this, VisualContainer);
-
-	    this.id = id;
-	    this.numSteps = numSteps;
-	    this.container = document.getElementById('sequences');
-	    this.container.innerHTML += '<div id=' + id + ' data-steps=' + this.numSteps + '></div>';
-	    this.sketch = new p5(Sketch, this.id.toString());
-	  }
-
-	  _createClass(VisualContainer, [{
-	    key: 'update',
-	    value: function update(position) {
-	      this.sketch.update(position);
-	    }
-	  }]);
-
-	  return VisualContainer;
-	}();
-
-	var Sketch = function Sketch(p) {
-	  var steps = [];
-	  var numSteps = void 0;
-	  var position = void 0;
-
-	  p.setup = function () {
-	    var canvas = p.createCanvas(window.innerWidth, 50);
-	    numSteps = canvas.parent().dataset.steps;
-	    position = 0;
-	    p.background(0);
-	    p.rectMode('center');
-	    for (var i = 0; i < numSteps; i++) {
-	      var xpos = i * (p.width / numSteps) + p.width / (numSteps * 2);
-	      steps.push(new Step(p, xpos, p.height / 2));
-	    }
-	  };
-
-	  p.draw = function () {
-	    p.background(0, 50);
-	    p.noStroke();
-	    for (var i = 0; i < numSteps; i++) {
-	      steps[i].update();
-	      if (i != position) {
-	        steps[i].draw();
-	      }
-	    }
-	  };
-
-	  p.update = function (_position) {
-	    position = _position;
-	  };
-
-	  p.reset = function () {
-	    steps = [];
-	    for (var i = 0; i < numSteps; i++) {
-	      var xpos = i * (p.width / numSteps) + p.width / (numSteps * 2);
-	      steps.push(new Step(p, xpos, p.height / 2));
-	    }
-	  };
-	};
-
 	var Step = function () {
 	  function Step(renderer, x, y) {
 	    _classCallCheck(this, Step);
@@ -1864,8 +1809,107 @@
 	  return Step;
 	}();
 
+	var Sequencer = function () {
+	  function Sequencer(renderer, index, width, height, numSteps) {
+	    _classCallCheck(this, Sequencer);
+
+	    this.renderer = renderer;
+	    this.steps = [];
+	    this.width = width;
+	    this.height = height;
+	    this.numSteps = numSteps;
+	    this.position = 0;
+	    this.index = index;
+
+	    for (var i = 0; i < numSteps; i++) {
+	      var xpos = i * (this.width / this.numSteps) + this.width / (this.numSteps * 2);
+	      this.steps.push(new Step(this.renderer, xpos, this.height / 2 + this.index * this.height));
+	    }
+	  }
+
+	  _createClass(Sequencer, [{
+	    key: 'update',
+	    value: function update(_position) {
+	      this.position = _position;
+	    }
+	  }, {
+	    key: 'display',
+	    value: function display() {
+	      for (var i = 0; i < this.numSteps; i++) {
+	        this.steps[i].update();
+	        if (i != this.position) {
+	          this.steps[i].draw();
+	        }
+	      }
+	    }
+	  }]);
+
+	  return Sequencer;
+	}();
+
+	var VisualController = function () {
+	  function VisualController() {
+	    _classCallCheck(this, VisualController);
+
+	    this.container = document.getElementById('sequences');
+	    this.sketch = new p5(Sketch, this.container);
+	  }
+
+	  _createClass(VisualController, [{
+	    key: 'update',
+	    value: function update(position) {
+	      this.sketch.update(position);
+	    }
+	  }, {
+	    key: 'add',
+	    value: function add(index, numSteps) {
+	      this.sketch.add(index, numSteps);
+	    }
+	  }]);
+
+	  return VisualController;
+	}();
+
+	var Sketch = function Sketch(p) {
+	  var sequencers = [];
+	  var position = void 0;
+
+	  p.setup = function () {
+	    var canvas = p.createCanvas(window.innerWidth, window.innerHeight);
+	    position = 0;
+	    p.background(0);
+	    p.rectMode('center');
+	  };
+
+	  p.draw = function () {
+	    p.background(0, 50);
+	    p.noStroke();
+	    for (var i = 0; i < sequencers.length; i++) {
+	      sequencers[i].display();
+	    }
+	  };
+
+	  p.update = function (positions) {
+	    for (var i = 0; i < positions.length; i++) {
+	      sequencers[i].update(positions[i]);
+	    }
+	  };
+
+	  p.add = function (index, numSteps) {
+	    sequencers.push(new Sequencer(p, index, p.width, 50, numSteps));
+	  };
+
+	  p.reset = function () {
+	    steps = [];
+	    for (var i = 0; i < numSteps; i++) {
+	      var xpos = i * (p.width / numSteps) + p.width / (numSteps * 2);
+	      steps.push(new Step(p, xpos, p.height / 2));
+	    }
+	  };
+	};
+
 	module.exports = {
-	  VisualContainer: VisualContainer
+	  VisualController: VisualController
 	};
 
 /***/ },
