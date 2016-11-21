@@ -54,15 +54,10 @@
 
 	'use strict';
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 	var ctx = new AudioContext();
 	var loader = __webpack_require__(2);
 	var Amaker = __webpack_require__(6);
 	var Graphics = __webpack_require__(7);
-	var P5 = __webpack_require__(8);
 
 	var buffers = ['assets/audio/eleven.mp3'];
 
@@ -103,66 +98,6 @@
 	    tick += 1;
 	  }, 10);
 	});
-
-	//-------------VIS---------------------
-
-	var Step = function () {
-	  function Step(renderer, x, y) {
-	    _classCallCheck(this, Step);
-
-	    this.renderer = renderer;
-	    this.x = x;
-	    this.y = y;
-	    this.size = 10;
-	  }
-
-	  _createClass(Step, [{
-	    key: 'update',
-	    value: function update() {
-	      this.size += Math.sin(this.renderer.frameCount / 10) / 5;
-	    }
-	  }, {
-	    key: 'draw',
-	    value: function draw() {
-	      this.renderer.rect(this.x, this.y, this.size, this.size);
-	    }
-	  }]);
-
-	  return Step;
-	}();
-
-	var vis = function vis(p) {
-	  var steps = [];
-
-	  p.setup = function () {
-	    p.createCanvas(window.innerWidth, window.innerHeight);
-	    p.background(0);
-	    p.rectMode('center');
-	    for (var i = 0; i < pattern.sequence.length; i++) {
-	      var xpos = i * (p.width / pattern.sequence.length) + p.width / (pattern.sequence.length * 2);
-	      steps.push(new Step(p, xpos, p.height / 2));
-	    }
-	  };
-
-	  p.draw = function () {
-	    p.background(0, 50);
-	    p.noStroke();
-	    for (var i = 0; i < pattern.sequence.length; i++) {
-	      steps[i].update();
-	      if (i != position) {
-	        steps[i].draw();
-	      }
-	    }
-	  };
-
-	  p.reset = function () {
-	    steps = [];
-	    for (var i = 0; i < pattern.sequence.length; i++) {
-	      var xpos = i * (p.width / pattern.sequence.length) + p.width / (pattern.sequence.length * 2);
-	      steps.push(new Step(p, xpos, p.height / 2));
-	    }
-	  };
-	};
 
 /***/ },
 /* 2 */

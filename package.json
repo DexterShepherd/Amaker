@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server --hot",
-    "build": "webpack src/main.js bundle.js"
+    "build": "webpack ./src/main.js ./bundle.js"
   },
   "author": "",
   "license": "ISC",
