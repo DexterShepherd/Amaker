@@ -1,3 +1,5 @@
+const Graphics = require('./graphics');
+
 class Sample {
   constructor(buffer, context){
     this.buffer = buffer;
@@ -82,21 +84,24 @@ function pattern(sound, params) {
 
 class Sequence {
   // { numSlices, rates, minLength, maxLength, maxDuration }
-  constructor(buffer, context, params) {
+  constructor(buffer, context, visuals, params) {
     this.buffer = buffer;
     this.context = context;
     this.params = params;
-
+    this.graphics = visuals;
     this.sound = new SndBuf(this.buffer, this.context);
     this.position = 0;
     this.clock = 0;
     this.pattern = pattern(this.sound, this.params);
+
+    this.graphics.add(this.params.index, this.pattern.length);
   }
 
   play() {
     if (this.clock == 0) {
       this.sound.rate(this.pattern.rates[this.position]);
       this.sound.pos(this.pattern.notes[this.position]);
+      this.graphics.update(this.position);
     }
     this.advanceTimer();
   }
