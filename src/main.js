@@ -22,7 +22,7 @@ loader(buffers, ctx, (err, samples) => {
     sequences.push(new Amaker.Sequence(samples[0], ctx, visuals,
       {
         numSlices: 128,
-        rates: [0.8, 1.6],
+        rates: [0.4, 0.8, 1.6],
         minLength: 4,
         maxLength: 12,
         maxDuration: 4,
