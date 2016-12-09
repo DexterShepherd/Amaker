@@ -1,26 +1,31 @@
 const p5 = require('p5');
 
 class Step {
-  constructor(renderer, x, y) {
+  constructor(renderer, x, y, z) {
     this.renderer = renderer;
     this.x = x;
     this.y = y;
-    this.size = 10;
+    this.z = z;
+    this.size = this.renderer.random(2, 20);
   }
   
   update() {
-    this.size += Math.sin(this.renderer.frameCount/10)/5;
   }
 
   draw() {
-    this.renderer.rect(this.x, this.y, this.size, this.size);
+    this.renderer.push();
+    this.renderer.translate(this.x, this.y, this.z);
+    this.renderer.sphere(this.size);
+    this.renderer.pop();
   }
 }
 
 class Sequencer {
-  constructor(renderer, index, width, height, numSteps) {
+  constructor(renderer, index, xpos, ypos, width, height, numSteps) {
     this.renderer = renderer;
     this.steps = [];
+    this.xpos = xpos;
+    this.ypos = ypos;
     this.width = width;
     this.height = height;
     this.numSteps = numSteps;
@@ -28,8 +33,9 @@ class Sequencer {
     this.index = index;
 
     for(let i = 0; i < numSteps; i++){
-      let xpos = i * (this.width/this.numSteps) + this.width/(this.numSteps * 2);
-      this.steps.push( new Step(this.renderer, xpos, this.height/2 + (this.index * this.height)));
+      this.steps.push( new Step(this.renderer, this.xpos + this.renderer.random(-this.width, this.width),
+                                               this.ypos + this.renderer.random(-this.height, this.height),
+                                               this.renderer.random(-100, -10)));
     }
   }
 
@@ -68,18 +74,20 @@ const Sketch = function(p) {
   let position;
 
   p.setup = function() {
-    let canvas = p.createCanvas(window.innerWidth, window.innerHeight);
+    let canvas = p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL);
     position = 0;
     p.background(0);
     p.rectMode('center');
   }
 
   p.draw = function() {
-    p.background(0, 50);
+    p.background(0);
     p.noStroke();
     for(let i = 0; i < sequencers.length; i++){
       sequencers[i].display();
     }
+    p.ambientLight(100);
+    p.pointLight(255, 255, 255, p.mouseX, p.mouseY, 0);
   }
 
   p.update = function(positions) {
@@ -89,7 +97,7 @@ const Sketch = function(p) {
   }
 
   p.add = function(index, numSteps) {
-    sequencers.push(new Sequencer(p, index, p.width, 50, numSteps));
+    sequencers.push(new Sequencer(p, index, p.random(-500, 500), p.random(-500, 500), 50, 50, numSteps));
   }
 
   p.reset = function() {
