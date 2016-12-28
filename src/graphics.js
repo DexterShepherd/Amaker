@@ -15,7 +15,7 @@ class Step {
   draw() {
     this.renderer.push();
     this.renderer.translate(this.x, this.y, this.z);
-    this.renderer.sphere(this.size);
+    this.renderer.box(this.size);
     this.renderer.pop();
   }
 }
